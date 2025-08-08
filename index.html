@@ -1,0 +1,385 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Frogger Game</title>
+    <script src="https://cdn.jsdelivr.net/npm/@tensorflow/tfjs@latest"> </script>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            height: 100vh;
+            background-color: #f0f8ff;
+        }
+        header {
+            width: 100%;
+            text-align: center;
+            margin-bottom: 20px;
+        }
+        header h1 {
+            text-shadow: 2px 2px 3px lightgrey;
+        }
+        a {
+            color: #003366;
+            text-decoration: none;
+        }
+        a:hover {
+            text-decoration: underline;
+        }
+        main {
+            width: 100%;
+            margin: 0px;
+            padding: 0px;
+            display: flex;
+            flex-flow: row wrap;
+            justify-content: space-evenly;
+            align-items: center;
+        }
+        #game-container {
+            position: relative;
+            width: 420px;
+            height: 400px;
+            background-color: #8fbc8f;
+            border: 2px solid #000;
+        }
+        .frog {
+            position: absolute;
+            width: 32px;
+            height: 32px;
+            border-radius: 3px;
+            background-color: green;
+            bottom: 0;
+            left: 180px;
+            /*
+            background-image:url("./img/zabka.png");
+            background-repeat: no-repeat;
+            background-size: cover;
+            */
+        }
+        .car {
+            margin: 0px;
+            padding: 0px;
+            position: absolute;
+            width: 32px;
+            height: 32px;
+            background-color: orangered;
+            top: 60px;
+            /*
+            background-image:url("./img/auto.png");
+            background-repeat: no-repeat;
+            background-position: center;
+            background-size: cover;
+            */
+        }
+        .van {
+            position: absolute;
+            width: 56px;
+            height: 32px;
+            background-color: orange;
+            top: 140px;
+            /*
+            background-image:url("./img/dodavka.png");
+            background-repeat: no-repeat;
+            background-position: center;
+            background-size: cover;
+            */
+        }
+        footer {
+            text-align: center;
+            margin:0px auto;
+            margin-top: 20px;
+            margin-bottom: 0px;
+        }
+        button {
+            padding: 10px 20px;
+            background-color: #4CAF50;
+            color: white;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            transition: background-color 0.3s;
+        }
+        button:hover {
+            background-color: #45a049;
+        }
+    </style>
+</head>
+<body>
+    <header>
+        <h1>Frogger Game</h1>
+        <p>Reinforcement learning example using Tensorflow.js</p>
+    </header>
+    <main>
+        <div id="game-container">
+            <div id="finish" style="position: absolute;left: 0;top: 0; width: 417px; height: 50px;background-color: #45a049;"></div>
+            <div id="road" style="position: absolute;left: 0;top: 51px; width: 417px; height: 140px;background-color: lightslategray;"></div>
+            <div id="line1" style="position: absolute;left: 0;top: 109px; width: 417px; height: 5px;background-color: whitesmoke;"></div>
+            <div id="line2" style="position: absolute;left: 0;top: 120px; width: 417px; height: 5px;background-color: whitesmoke;"></div>
+            
+            <div class="frog"></div>
+            <div class="car" style="left: 0;"></div>
+            <div class="car" style="left: 120px;"></div>
+            <div class="car" style="left: 240px;"></div>
+            <div class="van" style="left: 0;"></div>
+            <div class="van" style="left: 120px;"></div>
+            <div class="van" style="left: 240px;"></div>
+        </div>
+        <div>
+            <div id="micro-out-div">Creating Tensorflow model</div>
+            <div id="epsilon" style="margin-top: 20px;">Current epsilon: 0.7</div>
+            <button id="saveModel" style="margin-top: 20px;">Save model to local storage</button>
+        </div>
+    </main>
+    <footer>
+        See Tensorflow.js <a href="https://www.tensorflow.org/">documentation</a>
+    </footer>
+    
+    <script>
+        const saveModelEl = document.getElementById('saveModel');
+        
+        // Save model to local storage
+        saveModelEl.addEventListener('click', () => { 
+            const puvodniText = saveModelEl.textContent; // Uložíme si původní text tlačítka
+            saveModelEl.textContent = "Model saved!"; // Změníme text tlačítka
+            
+            // Zde uložte model do localStorage
+            model.save('localstorage://FroggerLSTMModel');
+            console.log('Model uložen do localStorage');
+            
+            setTimeout(() => {
+                saveModelEl.textContent = puvodniText; // Po sekundě vrátíme původní text
+            }, 1000); // Nastavíme časovač na 1 sekundy (1000 milisekund)
+        });
+        
+        // Game logic
+        function animateVehicles() {
+            const cars = document.querySelectorAll('.car');
+            const vans = document.querySelectorAll('.van');
+            const gameContainer = document.getElementById('game-container');
+            const containerWidth = gameContainer.offsetWidth;
+            
+            cars.forEach(car => {
+                let position = parseInt(car.style.left);
+                position -= 2; // Posun aut doleva
+                if (position < 0) { // pokud je mimo obraz, resetuje se pozice
+                    position = containerWidth-car.offsetWidth;
+                }
+                car.style.left = position + 'px';
+            });
+            
+            vans.forEach(van => {
+                let position = parseInt(van.style.left);
+                position += 2; // Posun aut doprava
+                if (position > containerWidth-van.offsetWidth) { // Pokud je mimo obraz, resetuje se pozice
+                    position = 0;
+                }
+                van.style.left = position + 'px';
+            });
+            
+        }
+        function moveFrog() {
+            const frog = document.querySelector('.frog');
+            const gameContainer = document.getElementById('game-container');
+            const containerWidth = gameContainer.offsetWidth-60;
+            const containerHeight = gameContainer.offsetHeight-40;
+            const minLeft = 0;
+            const maxLeft = containerWidth;
+            const minTop = 0;
+            const maxTop = containerHeight;
+            
+            let reward = 0;
+            
+            const state = createState();
+            const greedy = Math.random();
+            let action =null;
+            let actionIndex = 0;
+            if (greedy > epsilon) {
+                resultTf = model.predict(state);
+                actionIndex = tf.argMax(resultTf,axis=1).dataSync();
+                action = actions[actionIndex];
+            } else {
+                actionIndex = Math.floor(Math.random() * actions.length);
+                action = actions[actionIndex];
+            }
+            
+            if (action === 'left') {
+                frogX -= 10;
+            } else if (action === 'right') {
+                frogX += 10;
+            } else if (action === 'up') {
+                frogY -= 10;
+                // malá odměna za pohyb nahoru
+                reward = 30;
+            } else if (action === 'down') {
+                frogY += 10;
+            }
+            
+            if (frogX < minLeft) {
+                frogX = minLeft;
+                reward = -1;
+            }
+            if (frogX > maxLeft) {
+                frogX = maxLeft;
+                reward = -1;
+            }
+            if (frogY < minTop) {
+                frogY = minTop;
+            }
+            if (frogY > maxTop) {
+                frogY = maxTop;
+                reward = -1;
+            }
+            
+            frog.style.top = frogY + 'px';
+            frog.style.left = frogX + 'px';            
+            
+            const cars = document.querySelectorAll('.car');
+            const vans = document.querySelectorAll('.van');
+            if (checkCollision(frog, cars) || checkCollision(frog, vans)) {
+                frog.style.backgroundColor = 'red';
+                frogX = 180; // Srážka, reset pozice žáby
+                frogY = 360;
+                reward = -10;
+                gameStats.totalGames++;
+                gameStats.losses++;
+                gameCounter++; // Inkrementuj počítadlo her
+                updateEpsilon(); // Aktualizuj epsilon
+            } else if (frogY < 40) {
+                frog.style.backgroundColor = 'yellow';
+                frogX = 180; // Dorazila nahoru, reset pozice žáby
+                frogY = 360;
+                reward = 300;
+                gameStats.totalGames++;
+                gameStats.wins++;
+                gameCounter++; // Inkrementuj počítadlo her
+                updateEpsilon(); // Aktualizuj epsilon
+            } else {
+                frog.style.backgroundColor = 'green';
+            }
+            
+            document.getElementById('micro-out-div').innerText = 'Total games played ' + gameStats.totalGames + ', Wins: ' + gameStats.wins + ', Losses: ' + gameStats.losses;
+            
+            let rewards = [0,0,0,0];
+            rewards[action] = reward;
+            resultTf = model.predict(state);
+            resultTf = tf.add(resultTf,rewards);
+            return {
+                state:state,
+                result: resultTf
+            };
+        }
+        
+        function checkCollision(frog, elements) {
+            return [...elements].some(element => {
+                const frogRect = frog.getBoundingClientRect();
+                const elementRect = element.getBoundingClientRect();
+                return (frogRect.left <= elementRect.right &&
+                frogRect.right >= elementRect.left &&
+                frogRect.top <= elementRect.bottom &&
+                frogRect.bottom >= elementRect.top);
+            });
+        }
+        
+        function createState() {
+            const cars = document.querySelectorAll('.car');
+            const vans = document.querySelectorAll('.van');
+            const gameContainer = document.getElementById('game-container');
+            const containerWidth = gameContainer.offsetWidth;
+            const containerHeight = gameContainer.offsetHeight;
+            const state = [];
+            state.push(frogX/containerWidth);
+            state.push(frogY/containerHeight);
+            cars.forEach(car => {
+                state.push(parseInt(car.style.left)/containerWidth);
+            })
+            vans.forEach(van => {
+                state.push(parseInt(van.style.left)/containerWidth);
+            })
+            for (let i = numOfStates-1; i > 0; i--) {
+                states[i] = states[i - 1];
+            }
+            states[0] = state;
+            const stateTf = tf.tensor2d(states).reshape([1, numOfStates, 8]);
+            return stateTf;
+        }
+        
+        function gameLoop() {
+            animateVehicles();
+            gameEpisode = moveFrog();
+            model.fit(gameEpisode.state,gameEpisode.result).then(() => {
+                requestAnimationFrame(gameLoop);
+            });
+        }
+        
+        // Tensorflow.js
+        // Jednoduchý LSTM model
+        async function createModel() {
+            // Zkusit načíst model z localStorage
+            const savedModel = localStorage.getItem('tensorflowjs_models/FroggerLSTMModel/info');
+            if (savedModel) {
+                try {
+                    model = await tf.loadLayersModel('localstorage://FroggerLSTMModel');
+                    console.log('Model načten z localStorage');
+                } catch (error) {
+                    console.error('Chyba při načítání modelu:', error);
+                }
+            }
+            
+            // Pokud model nebyl načten nebo došlo k chybě, vytvoříme nový
+            if (!model) {
+                model = tf.sequential();
+                model.add(tf.layers.lstm({units: 24, inputShape: [numOfStates,8],kernelInitializer: 'heNormal'})); // units = počet neuronů v LSTM vrstvě
+                // přidány dvě vrstvy
+                model.add(tf.layers.dense({units: 16, activation: 'relu'}));
+                model.add(tf.layers.dropout({rate:0.2}));
+                model.add(tf.layers.dense({units: 4, activation: 'softmax'}));
+            }
+            // Kompilace modelu
+            model.compile({
+                optimizer: 'adam',
+                loss: 'categoricalCrossentropy',
+                metrics: ['accuracy'],
+                learningRate: 0.001
+            });
+            
+            return model;
+        }
+        
+        // Aktualizuj epsilon na konci každé hry
+        function updateEpsilon() {
+            epsilon = Math.max(epsilonMin, epsilonStart - epsilonDecayRate * gameCounter);
+            document.getElementById('epsilon').innerText = 'Current epsilon: ' + epsilon.toFixed(2);
+        }
+        
+        var frogX = 180;	// Žába X pozice
+        var frogY = 360;	// Žába Y pozice
+        const actions = ['left', 'right', 'up', 'down'];
+        var gameCounter = 0;
+        const epsilonStart = 0.7; // Začínáme s vyšším epsilonem
+        var epsilon = epsilonStart;
+        const epsilonDecayRate = 0.001; // Míra snižování epsilonu
+        const epsilonMin = 0.01; // Minimální hodnota epsilonu
+        var model = null;
+        const numOfStates = 8;
+        var states = [];
+        for (let i = 0; i < numOfStates; i++) {
+            states.push([0,0,0,0,0,0,0,0]);
+        }
+        const gameStats = {
+            totalGames: 0,
+            losses: 0,
+            wins:0
+        }
+        createModel().then(Tfmodel => {
+            model = Tfmodel;
+            document.getElementById('micro-out-div').innerText = 'Tensorflow.js model ready';
+            gameLoop();    
+        })
+    </script>
+</body>
+</html>
