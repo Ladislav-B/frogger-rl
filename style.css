@@ -1,0 +1,133 @@
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            min-height: 100vh;
+            background-color: #2c3e50; /* Tmavé pozadí pro lepší kontrast */
+            color: #ecf0f1;
+            display: flex;
+            flex-direction: column;
+        }
+        header {
+            width: 100%;
+            text-align: center;
+            padding: 20px 0;
+            background-color: #34495e; /* Oddělená hlavička */
+            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+            margin-bottom: 40px;
+        }
+        header h1 {
+            text-transform: uppercase;
+            letter-spacing: 2px;
+            color: #e67e22; /* Výrazná barva titulu */
+            text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.4);
+        }
+        a {
+            color: #3498db;
+            text-decoration: none;
+            transition: color 0.3s;
+        }
+        a:hover {
+            color: #2980b9;
+            text-decoration: underline;
+        }
+        main {
+            width: 100%;
+            flex: 1;
+            display: flex;
+            flex-flow: row wrap;
+            justify-content: center;
+            align-items: flex-start;
+            gap: 40px; /* Moderní mezery mezi prvky */
+            padding: 20px;
+        }
+        #game-container {
+            position: relative;
+            width: 420px;
+            height: 400px;
+            background-color: #27ae60; /* Sytější zelená pro trávník */
+            border: 6px solid #34495e;
+            border-radius: 8px; /* Zaoblené rohy */
+            box-shadow: 0 10px 25px rgba(0,0,0,0.5); /* Hluboký stín */
+            overflow: hidden;
+        }
+        .frog {
+            position: absolute;
+            width: 32px;
+            height: 32px;
+            background-image:url("./img/zabka.svg");
+            background-repeat: no-repeat;
+            background-size: cover;
+            bottom: 0;
+            left: 180px;
+            filter: drop-shadow(2px 2px 2px rgba(0,0,0,0.4)); /* Stín pro žabku */
+            z-index: 20;
+        }
+        .car {
+            margin: 0px;
+            padding: 0px;
+            position: absolute;
+            width: 32px;
+            height: 32px;
+            background-image: url("./img/auto.svg");
+            background-repeat: no-repeat;
+            background-size: cover;
+            top: 60px;
+            filter: drop-shadow(2px 2px 2px rgba(0,0,0,0.3));
+            z-index: 10;
+        }
+        .van {
+            position: absolute;
+            width: 56px;
+            height: 32px;
+            background-image: url("./img/dodavka.svg");
+            background-repeat: no-repeat;
+            background-size: cover;
+            top: 140px;
+            filter: drop-shadow(2px 2px 2px rgba(0,0,0,0.3));
+            z-index: 10;
+        }
+        #thinking-indicator {
+            display: none;
+            position: absolute;
+            font-size: 14px; /* Decentnější indikátor */
+            font-weight: bold;
+            color: #fff;
+            background-color: rgba(231, 76, 60, 0.9);
+            padding: 5px 10px;
+            border-radius: 4px;
+            z-index: 100;
+            pointer-events: none;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.2);
+        }
+        footer {
+            text-align: center;
+            padding: 20px;
+            background-color: #34495e;
+            color: #95a5a6;
+            width: 100%;
+            font-size: 0.9rem;
+        }
+        button {
+            padding: 12px 24px;
+            background-color: #2980b9; /* Modrá hodná rytíře */
+            color: white;
+            border: none;
+            border-radius: 4px;
+            font-weight: bold;
+            text-transform: uppercase;
+            box-shadow: 0 4px #1a5276; /* 3D efekt tlačítka */
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+        button:hover {
+            background-color: #3498db;
+            transform: translateY(-2px);
+        }
+        button:active {
+            transform: translateY(2px);
+            box-shadow: 0 2px #1a5276;
+        }
